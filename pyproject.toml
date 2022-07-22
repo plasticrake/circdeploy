@@ -1,0 +1,28 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "circdeploy"
+authors = [{ name = "Donald Patrick Seal", email = "code@plasticrake.com" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["circuitpython"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.7"
+dependencies = ["circup", "igittigitt", "rich", "typer"]
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://github.com/plasticrake/circdeploy"
+
+[project.scripts]
+circdeploy = "circdeploy.main:main"
+
+[tool.isort]
+profile = "black"

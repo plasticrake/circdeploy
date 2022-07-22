@@ -9,10 +9,23 @@ readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["circuitpython"]
 classifiers = [
+  "Environment :: Console",
   "Intended Audience :: Developers",
+  "Intended Audience :: Education",
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python",
+  "Topic :: Education",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Embedded Systems",
+  "Topic :: System :: Software Distribution",
+
 ]
 requires-python = ">=3.7"
 dependencies = ["circup", "igittigitt", "rich", "typer"]

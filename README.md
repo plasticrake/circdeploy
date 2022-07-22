@@ -11,7 +11,7 @@ to reboot.
 **Default behavior:** Copies all `./**/*.py` and `./**/*.pyc` files from the current directory to an
 automatically detected CircuitPython device, skipping any files in `.gitignore`
 
-```shell
+```text
 $ circdeploy --help
 
  Usage: circdeploy [OPTIONS]

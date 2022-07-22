@@ -1,3 +1,4 @@
+import os
 import re
 import shutil
 import sys
@@ -12,7 +13,14 @@ from rich import print
 __version__ = "0.1.0"
 
 
-def include_file(file_path: Path, gitignore_parser):
+def include_file(file_path: Path, exclude_files: list[Path] | None, gitignore_parser):
+
+    if exclude_files is not None:
+        realpath = os.path.realpath(file_path)
+        for f in exclude_files:
+            if os.path.realpath(f) == realpath:
+                return False
+
     if gitignore_parser is not None:
         result = gitignore_parser.match(file_path)
         if result is True:
@@ -27,7 +35,14 @@ def include_file(file_path: Path, gitignore_parser):
     return True
 
 
-def include_dir(dir_path: Path, gitignore_parser):
+def include_dir(dir_path: Path, exclude_files: list[Path] | None, gitignore_parser):
+
+    if exclude_files is not None:
+        realpath = os.path.realpath(dir_path)
+        for f in exclude_files:
+            if os.path.realpath(f) == realpath:
+                return False
+
     if gitignore_parser is not None:
         result = gitignore_parser.match(dir_path)
         if result is True:
@@ -39,21 +54,41 @@ def include_dir(dir_path: Path, gitignore_parser):
     return True
 
 
-def collect_matches_for_path(source_path: Path, gitignore_parser: bool):
+def collect_matches_for_path(
+    path: Path, exclude_files: list[Path], gitignore_parser: bool
+):
 
-    source_files = []
-    source_dirs = []
+    files = []
+    dirs = []
 
-    for child in source_path.iterdir():
+    for child in path.iterdir():
 
         if child.is_file():
-            if include_file(child, gitignore_parser):
-                source_files.append(child.resolve())
+            if include_file(child, exclude_files, gitignore_parser):
+                files.append(child.resolve())
         elif child.is_dir():
-            if include_dir(child, gitignore_parser):
-                source_dirs.append(child.resolve())
+            if include_dir(child, exclude_files, gitignore_parser):
+                dirs.append(child.resolve())
 
-    return (source_files, source_dirs)
+    return (files, dirs)
+
+
+def collect_matching_files(
+    dir: Path, exclude_files: list[Path], gitignore_parser: bool
+):
+    dirs = [dir]
+    files: list[Path] = []
+
+    while len(dirs) > 0:
+        dir = dirs.pop()
+
+        (files_for_path, dirs_for_path) = collect_matches_for_path(
+            dir, exclude_files, gitignore_parser
+        )
+        files += files_for_path
+        dirs += dirs_for_path
+
+    return files
 
 
 def main():
@@ -77,6 +112,10 @@ def main():
             help="Deploy to this location.",
             show_default="Device path automatically detected",
         ),
+        delete: Optional[bool] = typer.Option(
+            True,
+            help="Delete files in destination.",
+        ),
         use_gitignore: Optional[bool] = typer.Option(
             True,
             "--use-gitignore/--no-gitignore",
@@ -86,7 +125,13 @@ def main():
             False, "--dry-run", help="Don't copy files, only output what would be done."
         ),
     ):
-        """Deploy current CircuitPython project"""
+        """Deploy current CircuitPython project
+
+        All .py and .pyc files in the current directory tree will be copied to the
+        destination (device)\n
+        All other .py and .pyc files in the destination directory tree (device)
+        will be deleted except /lib/
+        """
         if destination is None:
             destination = find_device()
 
@@ -130,20 +175,15 @@ def main():
         else:
             gitignore_parser = None
 
-        source_files: list[Path] = []
-        source_dirs = [source_root_dir]
+        source_files = collect_matching_files(source_root_dir, None, gitignore_parser)
 
-        while len(source_dirs) > 0:
-            source_dir = source_dirs.pop()
-
-            (source_files_for_path, source_dirs_for_path) = collect_matches_for_path(
-                source_dir, gitignore_parser
-            )
-            source_files += source_files_for_path
-            source_dirs += source_dirs_for_path
+        # files copied to destination
+        dest_files_copied: list[Path] = []
 
         for file in source_files:
             dest_file = destination_root_dir.joinpath(file.relative_to(source_root_dir))
+            dest_files_copied.append(dest_file)
+
             print(
                 f"Copying ./{file.relative_to(source_root_dir)} to "
                 f"./{dest_file.relative_to(destination_root_dir)}"
@@ -163,6 +203,25 @@ def main():
                     print(
                         f"Error while copying file: {file} to: {dest_file}, "
                         f"{err=}, {type(err)=}"
+                    )
+                    raise err
+
+        dest_files_to_delete = collect_matching_files(
+            destination_root_dir,
+            dest_files_copied + [destination_root_dir.joinpath("lib")],
+            gitignore_parser,
+        )
+
+        for file_to_delete in dest_files_to_delete:
+            print(f"Deleting ./{file_to_delete.relative_to(destination_root_dir)}")
+
+            if not dry_run:
+                try:
+                    os.remove(file_to_delete)
+                except (OSError) as err:
+                    print(
+                        f"Error while deleting file "
+                        f"{file_to_delete}, {err=}, {type(err)=}"
                     )
                     raise err
 

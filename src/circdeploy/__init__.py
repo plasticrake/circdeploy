@@ -1,5 +1,3 @@
-"""Easily deploy your CircuitPython projects"""
-
 import re
 import shutil
 import sys

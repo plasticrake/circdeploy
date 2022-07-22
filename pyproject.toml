@@ -1,41 +1,45 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
-[project]
+[tool.poetry]
 name = "circdeploy"
-authors = [{ name = "Donald Patrick Seal", email = "code@plasticrake.com" }]
+version = "0.1.0"
+description = "Easily deploy your CircuitPython projects"
+license = "MIT"
+authors = ["Patrick Seal <code@plasticrake.com>"]
 readme = "README.md"
-license = { file = "LICENSE" }
+homepage = "https://github.com/plasticrake/circdeploy"
 keywords = ["circuitpython"]
 classifiers = [
   "Environment :: Console",
   "Intended Audience :: Developers",
   "Intended Audience :: Education",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python",
   "Topic :: Education",
   "Topic :: Software Development :: Build Tools",
   "Topic :: Software Development :: Embedded Systems",
   "Topic :: System :: Software Distribution",
-
 ]
-requires-python = ">=3.7"
-dependencies = ["circup", "igittigitt", "rich", "typer"]
-dynamic = ["version", "description"]
 
-[project.urls]
-Home = "https://github.com/plasticrake/circdeploy"
+[tool.poetry.dependencies]
+python = "^3.7"
+circup = "^1.1.2"
+igittigitt = "^2.1.2"
+rich = "^12.5.1"
+typer = "^0.6.1"
 
-[project.scripts]
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+tox = "^3.25.1"
+black = "^22.6.0"
+isort = "^5.10.1"
+flake8 = "^4.0.1"
+
+[tool.poetry.scripts]
 circdeploy = "circdeploy.main:main"
 
 [tool.isort]
 profile = "black"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

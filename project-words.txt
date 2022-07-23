@@ -1,5 +1,11 @@
 circdeploy
 circuitpython
 circup
+envlist
 igittigitt
+pythonpath
+setenv
+snok
+testenv
+toxinidir
 typer

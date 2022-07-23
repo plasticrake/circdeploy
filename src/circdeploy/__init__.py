@@ -1,3 +1,6 @@
+# this is needed to support list[Path] typing on python 3.8
+from __future__ import annotations
+
 import os
 import re
 import shutil

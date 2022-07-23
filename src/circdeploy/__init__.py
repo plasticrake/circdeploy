@@ -13,7 +13,7 @@ import typer
 from circup import find_device, get_circuitpython_version
 from rich import print
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 def include_file(file_path: Path, exclude_files: list[Path] | None, gitignore_parser):

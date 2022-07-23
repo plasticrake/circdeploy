@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "circdeploy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Easily deploy your CircuitPython projects"
 license = "MIT"
 authors = ["Patrick Seal <code@plasticrake.com>"]

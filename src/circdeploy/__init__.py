@@ -1,16 +1,15 @@
-# this is needed to support list[Path] typing on python 3.8
-from __future__ import annotations
+# this is needed to support list[Path] typing on python < v3.10
+# from __future__ import annotations
 
 import os
 import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
-from circup import DiskBackend, logger
-from circup.command_utils import find_device
+from circup import DiskBackend, logger  # type: ignore
+from circup.command_utils import find_device  # type: ignore
 from igittigitt import IgnoreParser
 from rich import print
 
@@ -109,14 +108,14 @@ def main():
 
     @app.command()
     def deploy(
-        source: Optional[str] = typer.Option(
+        source: str = typer.Option(
             Path.cwd(),
             "--source",
             "--src",
             "-s",
             help="Deploy from this location.",
         ),
-        destination: Optional[str] = typer.Option(
+        destination: str | None = typer.Option(
             None,
             "--destination",
             "--dest",
@@ -124,16 +123,16 @@ def main():
             help="Deploy to this location.",
             show_default="Device path automatically detected",
         ),
-        delete: Optional[bool] = typer.Option(
+        delete: bool = typer.Option(
             True,
             help="Delete files in destination.",
         ),
-        use_gitignore: Optional[bool] = typer.Option(
+        use_gitignore: bool = typer.Option(
             True,
             "--use-gitignore/--no-gitignore",
             help="Ignore files using .gitignore files relative to source path.",
         ),
-        dry_run: Optional[bool] = typer.Option(
+        dry_run: bool = typer.Option(
             False, "--dry-run", help="Don't copy files, only output what would be done."
         ),
     ):

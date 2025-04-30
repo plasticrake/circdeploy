@@ -1,11 +1,11 @@
-[tool.poetry]
+[project]
 name = "circdeploy"
 version = "0.2.1"
 description = "Easily deploy your CircuitPython projects"
 license = "MIT"
-authors = ["Patrick Seal <code@plasticrake.com>"]
 readme = "README.md"
-homepage = "https://github.com/plasticrake/circdeploy"
+requires-python = ">=3.9"
+authors = [{ name = "Patrick Seal", email = "code@plasticrake.com" }]
 keywords = ["circuitpython"]
 classifiers = [
   "Environment :: Console",
@@ -19,28 +19,31 @@ classifiers = [
   "Topic :: Software Development :: Embedded Systems",
   "Topic :: System :: Software Distribution",
 ]
+dependencies = [
+  "circup (>=2.2.2, <3.0.0)",
+  "igittigitt (>=2.1.5, <3.0.0)",
+  "rich (>=14.0.0, <15.0.0)",
+  "typer (>=0.15.3, <0.16.0)",
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-circup = "^1.1.2"
-igittigitt = "^2.1.2"
-rich = "^12.5.1"
-typer = "^0.6.1"
+[project.urls]
+repository = "https://github.com/plasticrake/circdeploy"
+homepage = "https://github.com/plasticrake/circdeploy"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
-tox = "^3.25.1"
-black = "^22.6.0"
-isort = "^5.10.1"
-flake8 = "^4.0.1"
-tox-gh-actions = "^2.9.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 circdeploy = "circdeploy:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+tox = "^4.25.0"
+black = "^25.1.0"
+isort = "^6.0.1"
+flake8 = "^7.2.0"
+tox-gh-actions = "^3.3.0"
 
 [tool.isort]
 profile = "black"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"

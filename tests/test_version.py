@@ -10,7 +10,7 @@ def test_versions_are_in_sync():
 
     path = Path(__file__).resolve().parents[1] / "pyproject.toml"
     pyproject = toml.loads(open(str(path)).read())
-    pyproject_version = pyproject["tool"]["poetry"]["version"]
+    pyproject_version = pyproject["project"]["version"]
 
     package_init_version = circdeploy.__version__
 

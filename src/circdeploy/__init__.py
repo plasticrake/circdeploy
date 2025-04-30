@@ -8,15 +8,20 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import igittigitt
 import typer
-from circup import find_device, get_circuitpython_version
+from circup import DiskBackend, logger
+from circup.command_utils import find_device
+from igittigitt import IgnoreParser
 from rich import print
 
 __version__ = "0.2.1"
 
 
-def include_file(file_path: Path, exclude_files: list[Path] | None, gitignore_parser):
+def include_file(
+    file_path: Path,
+    exclude_files: list[Path] | None,
+    gitignore_parser: IgnoreParser | None,
+):
 
     if exclude_files is not None:
         realpath = os.path.realpath(file_path)
@@ -38,7 +43,11 @@ def include_file(file_path: Path, exclude_files: list[Path] | None, gitignore_pa
     return True
 
 
-def include_dir(dir_path: Path, exclude_files: list[Path] | None, gitignore_parser):
+def include_dir(
+    dir_path: Path,
+    exclude_files: list[Path] | None,
+    gitignore_parser: IgnoreParser | None,
+):
 
     if exclude_files is not None:
         realpath = os.path.realpath(dir_path)
@@ -58,7 +67,7 @@ def include_dir(dir_path: Path, exclude_files: list[Path] | None, gitignore_pars
 
 
 def collect_matches_for_path(
-    path: Path, exclude_files: list[Path], gitignore_parser: bool
+    path: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
 ):
 
     files = []
@@ -77,7 +86,7 @@ def collect_matches_for_path(
 
 
 def collect_matching_files(
-    dir: Path, exclude_files: list[Path], gitignore_parser: bool
+    dir: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
 ):
     dirs = [dir]
     files: list[Path] = []
@@ -143,7 +152,9 @@ def main():
             sys.exit(1)
         else:
             if Path(destination, "boot_out.txt").is_file():
-                CPY_VERSION, board_id = get_circuitpython_version(destination)
+                CPY_VERSION, board_id = DiskBackend(
+                    destination, logger
+                ).get_circuitpython_version()
                 print(
                     f"Found device ({board_id}) at {destination}, "
                     f"running CircuitPython {CPY_VERSION}\n"
@@ -173,7 +184,7 @@ def main():
             sys.exit(1)
 
         if use_gitignore:
-            gitignore_parser = igittigitt.IgnoreParser()
+            gitignore_parser = IgnoreParser()
             gitignore_parser.parse_rule_files(source_root_dir)
         else:
             gitignore_parser = None
@@ -221,7 +232,7 @@ def main():
             if not dry_run:
                 try:
                     os.remove(file_to_delete)
-                except (OSError) as err:
+                except OSError as err:
                     print(
                         f"Error while deleting file "
                         f"{file_to_delete}, {err=}, {type(err)=}"

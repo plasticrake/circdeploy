@@ -1,5 +1,5 @@
 # this is needed to support list[Path] typing on python < v3.10
-# from __future__ import annotations
+from __future__ import annotations
 
 import os
 import re

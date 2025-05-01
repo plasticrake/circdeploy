@@ -1,0 +1,57 @@
+target-version = "py38"
+line-length = 88
+
+[lint]
+select = [
+  "ASYNC", # flake8-async
+  "B",     # flake8-bugbear
+  "BLE",   # flake8-blind-except
+  "C4",    # flake8-comprehensions
+  "DTZ",   # flake8-datetimez
+  "E",     # pycodestyle
+  "EM",    # flake8-errmsg
+  "EXE",   # flake8-executable
+  "F",     # Pyflakes
+  "FLY",   # flynt
+  "FURB",  # refurb
+  "I",     # isort
+  "INT",   # flake8-gettext
+  "ISC",   # flake8-implicit-str-concat
+  "PERF",  # Perflint
+  "PL",    # Pylint
+  "PT",    # flake8-pytest-style
+  "RET",   # flake8-return
+  "SLOT",  # flake8-slots
+  "TC",    # flake8-type-checking
+  "TID",   # flake8-tidy-imports
+  "UP",    # pyupgrade
+  "W",     # pycodestyle
+  "YTT",   # flake8-2020
+  # "A",     # flake8-builtins
+  # "ARG",   # flake8-unused-arguments
+  # "C90",   # mccabe
+  # "N",     # pep8-naming
+  # "PTH",   # flake8-use-pathlib
+  # "RUF",   # Ruff-specific rules
+  # "S",     # flake8-bandit
+  # "SIM",   # flake8-simplify
+  # "TRY",   # tryceratops
+]
+preview = true
+
+extend-select = [
+  "C416", # unnecessary-comprehension
+  "D419", # empty-docstring
+  "W291", # trailing-whitespace
+]
+
+ignore = [
+  "PLR0913", # too many arguments
+  "PLR0917", # too many positional arguments
+  "PLR0915", # too many statements
+  "PLR0912", # too many branches
+  "PLR5501", # Use `elif` instead of `else` then `if`, to reduce indentation
+]
+
+[format]
+line-ending = "lf"

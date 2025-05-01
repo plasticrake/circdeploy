@@ -1,0 +1,45 @@
+
+requires = ["tox>=4.24.1", "tox-uv>=1.23"]
+env_list = ["3.13", "3.12", "3.11", "3.10", "type", "pkg_meta"]
+skip_missing_interpreters = true
+
+[gh.python]
+"3.13" = ["3.13", "type", "pkg_meta"]
+"3.12" = ["3.12"]
+"3.11" = ["3.11"]
+"3.10" = ["3.10"]
+
+[testenv]
+deps = ["pytest"]
+commands = ["pytest"]
+
+[env.type]
+description = "run type check on code base"
+deps = ["mypy"]
+commands = [["mypy", "src{/}circdeploy"], ["mypy", "tests"]]
+
+[env.pkg_meta]
+description = "check that the long description is valid"
+skip_install = true
+deps = ["check-wheel-contents>=0.6", "twine>=5.1.1", "uv>=0.4.17"]
+commands = [
+  [
+    "uv",
+    "build",
+    "--sdist",
+    "--wheel",
+    "--out-dir",
+    "{env_tmp_dir}",
+    ".",
+  ],
+  [
+    "twine",
+    "check",
+    "{env_tmp_dir}{/}*",
+  ],
+  [
+    "check-wheel-contents",
+    "--no-config",
+    "{env_tmp_dir}",
+  ],
+]

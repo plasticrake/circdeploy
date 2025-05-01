@@ -18,7 +18,6 @@ def include_file(
     exclude_files: list[Path] | None,
     gitignore_parser: IgnoreParser | None,
 ):
-
     if exclude_files is not None:
         realpath = os.path.realpath(file_path)
         for f in exclude_files:
@@ -44,7 +43,6 @@ def include_dir(
     exclude_files: list[Path] | None,
     gitignore_parser: IgnoreParser | None,
 ):
-
     if exclude_files is not None:
         realpath = os.path.realpath(dir_path)
         for f in exclude_files:
@@ -65,12 +63,10 @@ def include_dir(
 def collect_matches_for_path(
     path: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
 ):
-
     files = []
     dirs = []
 
     for child in path.iterdir():
-
         if child.is_file():
             if include_file(child, exclude_files, gitignore_parser):
                 files.append(child.resolve())
@@ -100,7 +96,6 @@ def collect_matching_files(
 
 
 def main():
-
     app = typer.Typer()
 
     @app.command()

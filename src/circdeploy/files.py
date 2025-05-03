@@ -24,10 +24,7 @@ def include_file(
     if file_path.name.startswith("."):
         return False
 
-    if re.search("^\\.pyc?$", file_path.suffix, re.IGNORECASE) is None:
-        return False
-
-    return True
+    return re.search(r"^\.pyc?$", file_path.suffix, re.IGNORECASE) is not None
 
 
 def include_dir(
@@ -46,42 +43,38 @@ def include_dir(
         if result is True:
             return False
 
-    if dir_path.name.startswith("."):
-        return False
-
-    return True
+    return not dir_path.name.startswith(".")
 
 
 def collect_matches_for_path(
     path: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
 ):
     files = []
-    dirs = []
+    paths = []
 
     for child in path.iterdir():
         if child.is_file():
             if include_file(child, exclude_files, gitignore_parser):
                 files.append(child.resolve())
-        elif child.is_dir():
-            if include_dir(child, exclude_files, gitignore_parser):
-                dirs.append(child.resolve())
+        elif child.is_dir() and include_dir(child, exclude_files, gitignore_parser):
+            paths.append(child.resolve())
 
-    return (files, dirs)
+    return (files, paths)
 
 
 def collect_matching_files(
-    dir: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
+    path: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
 ):
-    dirs = [dir]
+    paths = [path]
     files: list[Path] = []
 
-    while len(dirs) > 0:
-        dir = dirs.pop()
+    while len(paths) > 0:
+        path = paths.pop()
 
         (files_for_path, dirs_for_path) = collect_matches_for_path(
-            dir, exclude_files, gitignore_parser
+            path, exclude_files, gitignore_parser
         )
         files += files_for_path
-        dirs += dirs_for_path
+        paths += dirs_for_path
 
     return files

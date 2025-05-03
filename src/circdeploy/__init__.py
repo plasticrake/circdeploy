@@ -7,7 +7,7 @@ from circup import DiskBackend  # type: ignore
 from circup import logger as circup_logger  # type: ignore
 from circup.command_utils import find_device  # type: ignore
 from platformdirs import user_cache_dir
-from rich import print
+from rich import print  # noqa: A004
 
 from circdeploy.deploy import deploy as deploy_files
 from circdeploy.file_cache import FileCache, calc_project_hash
@@ -77,12 +77,12 @@ def main():
             sys.exit(1)
         else:
             if Path(destination, "boot_out.txt").is_file():
-                CPY_VERSION, board_id = DiskBackend(
+                circuit_python_version, board_id = DiskBackend(
                     destination, circup_logger
                 ).get_circuitpython_version()
                 print(
                     f"Found device ({board_id}) at {destination}, "
-                    f"running CircuitPython {CPY_VERSION}\n"
+                    f"running CircuitPython {circuit_python_version}\n"
                 )
 
         destination_root_dir = Path(destination).resolve()
@@ -103,7 +103,7 @@ def main():
                 print(
                     f"Error while deleting file {cache_file_path}, {err=}, {type(err)=}"
                 )
-                raise err
+                raise
 
         if use_cache:
             file_cache = FileCache(cache_file_path)

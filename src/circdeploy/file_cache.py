@@ -23,7 +23,7 @@ def calc_file_hash(file_path: Path) -> str:
 
 
 class FileCacheEntry:
-    __slots__ = ("st_mtime", "st_size", "checksum")
+    __slots__ = ("checksum", "st_mtime", "st_size")
 
     def __init__(
         self,

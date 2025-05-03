@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from igittigitt import IgnoreParser
-from rich import print
+from rich import print  # noqa: A004
 
 from circdeploy.file_cache import FileCache
 from circdeploy.files import collect_matching_files
@@ -20,7 +20,7 @@ def delete_files(
 ):
     dest_files_to_delete = collect_matching_files(
         destination_root_dir,
-        exclude_files=exclude_files + [destination_root_dir.joinpath("lib")],
+        exclude_files=[*exclude_files, destination_root_dir.joinpath("lib")],
         gitignore_parser=gitignore_parser,
     )
 
@@ -34,7 +34,7 @@ def delete_files(
                 print(
                     f"Error while deleting file {file_to_delete}, {err=}, {type(err)=}"
                 )
-                raise err
+                raise
 
 
 def deploy(
@@ -48,6 +48,28 @@ def deploy(
     print(f"From: {source_root_dir}")
     print(f"  To: {destination_root_dir}\n")
 
+    validate_directories(source_root_dir, destination_root_dir)
+
+    gitignore_parser = setup_gitignore_parser(source_root_dir, use_gitignore)
+
+    source_files = collect_matching_files(
+        source_root_dir, exclude_files=None, gitignore_parser=gitignore_parser
+    )
+
+    dest_files_keep = copy_files(
+        source_files, source_root_dir, destination_root_dir, file_cache, dry_run
+    )
+
+    if delete:
+        delete_files(
+            destination_root_dir,
+            exclude_files=dest_files_keep,
+            gitignore_parser=gitignore_parser,
+            dry_run=dry_run,
+        )
+
+
+def validate_directories(source_root_dir: Path, destination_root_dir: Path):
     if not source_root_dir.is_dir():
         print(
             "[bold red]"
@@ -65,23 +87,26 @@ def deploy(
         )
         sys.exit(1)
 
+
+def setup_gitignore_parser(source_root_dir: Path, use_gitignore: bool):
     if use_gitignore:
         gitignore_parser = IgnoreParser()
         gitignore_parser.parse_rule_files(source_root_dir)
-    else:
-        gitignore_parser = None
+        return gitignore_parser
+    return None
 
-    source_files = collect_matching_files(
-        source_root_dir, exclude_files=None, gitignore_parser=gitignore_parser
-    )
 
-    # keep track of files copied to destination
-    # to prevent deleting them when clearing destination
+def copy_files(
+    source_files: list[Path],
+    source_root_dir: Path,
+    destination_root_dir: Path,
+    file_cache: FileCache | None,
+    dry_run: bool,
+) -> list[Path]:
     dest_files_keep: list[Path] = []
 
     for file in source_files:
         dest_file = destination_root_dir.joinpath(file.relative_to(source_root_dir))
-
         dest_files_keep.append(dest_file)
 
         if (
@@ -105,7 +130,7 @@ def deploy(
                     f"Error while creating destination directory "
                     f"{dest_file.parent}, {err=}, {type(err)=}"
                 )
-                raise err
+                raise
             try:
                 shutil.copy(file, dest_file)
                 if file_cache is not None:
@@ -115,14 +140,8 @@ def deploy(
                     f"Error while copying file: {file} to: {dest_file}, "
                     f"{err=}, {type(err)=}"
                 )
-                raise err
+                raise
             if file_cache is not None:
                 file_cache.save()
 
-    if delete:
-        delete_files(
-            destination_root_dir,
-            exclude_files=dest_files_keep,
-            gitignore_parser=gitignore_parser,
-            dry_run=dry_run,
-        )
+    return dest_files_keep

@@ -1,12 +1,14 @@
-target-version = "py38"
 line-length = 88
 
 [lint]
 select = [
+  "A",     # flake8-builtins
+  "ARG",   # flake8-unused-arguments
   "ASYNC", # flake8-async
   "B",     # flake8-bugbear
   "BLE",   # flake8-blind-except
   "C4",    # flake8-comprehensions
+  "C90",   # mccabe
   "DTZ",   # flake8-datetimez
   "E",     # pycodestyle
   "EM",    # flake8-errmsg
@@ -17,25 +19,22 @@ select = [
   "I",     # isort
   "INT",   # flake8-gettext
   "ISC",   # flake8-implicit-str-concat
+  "N",     # pep8-naming
   "PERF",  # Perflint
   "PL",    # Pylint
   "PT",    # flake8-pytest-style
+  "PTH",   # flake8-use-pathlib
   "RET",   # flake8-return
+  "RUF",   # Ruff-specific rules
+  "S",     # flake8-bandit
+  "SIM",   # flake8-simplify
   "SLOT",  # flake8-slots
   "TC",    # flake8-type-checking
   "TID",   # flake8-tidy-imports
+  "TRY",   # tryceratops
   "UP",    # pyupgrade
   "W",     # pycodestyle
   "YTT",   # flake8-2020
-  # "A",     # flake8-builtins
-  # "ARG",   # flake8-unused-arguments
-  # "C90",   # mccabe
-  # "N",     # pep8-naming
-  "PTH", # flake8-use-pathlib
-  # "RUF",   # Ruff-specific rules
-  # "S",     # flake8-bandit
-  # "SIM",   # flake8-simplify
-  # "TRY",   # tryceratops
 ]
 preview = true
 
@@ -51,7 +50,13 @@ ignore = [
   "PLR0915", # too many statements
   "PLR0912", # too many branches
   "PLR5501", # Use `elif` instead of `else` then `if`, to reduce indentation
+  "S324",    # Probable use of insecure hash functions in `hashlib`
+  "S301",    # pickle
+  "S403",    # pickle
 ]
+
+[lint.per-file-ignores]
+"**/tests/*" = ["S101", "S404", "S603"]
 
 [format]
 line-ending = "lf"

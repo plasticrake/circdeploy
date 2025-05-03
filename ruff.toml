@@ -31,7 +31,7 @@ select = [
   # "ARG",   # flake8-unused-arguments
   # "C90",   # mccabe
   # "N",     # pep8-naming
-  # "PTH",   # flake8-use-pathlib
+  "PTH", # flake8-use-pathlib
   # "RUF",   # Ruff-specific rules
   # "S",     # flake8-bandit
   # "SIM",   # flake8-simplify

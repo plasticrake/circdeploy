@@ -1,101 +1,25 @@
-import os
-import re
-import shutil
+import logging
 import sys
 from pathlib import Path
 
 import typer
-from circup import DiskBackend, logger  # type: ignore
+from circup import DiskBackend  # type: ignore
+from circup import logger as circup_logger  # type: ignore
 from circup.command_utils import find_device  # type: ignore
-from igittigitt import IgnoreParser
+from platformdirs import user_cache_dir
 from rich import print
+
+from circdeploy.deploy import deploy as deploy_files
+from circdeploy.file_cache import FileCache, calc_project_hash
 
 __version__ = "0.2.1"
 
-
-def include_file(
-    file_path: Path,
-    exclude_files: list[Path] | None,
-    gitignore_parser: IgnoreParser | None,
-):
-    if exclude_files is not None:
-        realpath = os.path.realpath(file_path)
-        for f in exclude_files:
-            if os.path.realpath(f) == realpath:
-                return False
-
-    if gitignore_parser is not None:
-        result = gitignore_parser.match(file_path)
-        if result is True:
-            return False
-
-    if file_path.name.startswith("."):
-        return False
-
-    if re.search("^\\.pyc?$", file_path.suffix, re.IGNORECASE) is None:
-        return False
-
-    return True
-
-
-def include_dir(
-    dir_path: Path,
-    exclude_files: list[Path] | None,
-    gitignore_parser: IgnoreParser | None,
-):
-    if exclude_files is not None:
-        realpath = os.path.realpath(dir_path)
-        for f in exclude_files:
-            if os.path.realpath(f) == realpath:
-                return False
-
-    if gitignore_parser is not None:
-        result = gitignore_parser.match(dir_path)
-        if result is True:
-            return False
-
-    if dir_path.name.startswith("."):
-        return False
-
-    return True
-
-
-def collect_matches_for_path(
-    path: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
-):
-    files = []
-    dirs = []
-
-    for child in path.iterdir():
-        if child.is_file():
-            if include_file(child, exclude_files, gitignore_parser):
-                files.append(child.resolve())
-        elif child.is_dir():
-            if include_dir(child, exclude_files, gitignore_parser):
-                dirs.append(child.resolve())
-
-    return (files, dirs)
-
-
-def collect_matching_files(
-    dir: Path, exclude_files: list[Path] | None, gitignore_parser: IgnoreParser | None
-):
-    dirs = [dir]
-    files: list[Path] = []
-
-    while len(dirs) > 0:
-        dir = dirs.pop()
-
-        (files_for_path, dirs_for_path) = collect_matches_for_path(
-            dir, exclude_files, gitignore_parser
-        )
-        files += files_for_path
-        dirs += dirs_for_path
-
-    return files
+logger = logging.getLogger(__name__)
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     app = typer.Typer()
 
     @app.command()
@@ -124,6 +48,16 @@ def main():
             "--use-gitignore/--no-gitignore",
             help="Ignore files using .gitignore files relative to source path.",
         ),
+        use_cache: bool = typer.Option(
+            True,
+            "--use-cache/--no-cache",
+            help="Use file cache to skip unchanged files.",
+        ),
+        reset_cache: bool = typer.Option(
+            False,
+            "--reset-cache",
+            help="Reset file cache.",
+        ),
         dry_run: bool = typer.Option(
             False, "--dry-run", help="Don't copy files, only output what would be done."
         ),
@@ -133,7 +67,7 @@ def main():
         All .py and .pyc files in the current directory tree will be copied to the
         destination (device)\n
         All other .py and .pyc files in the destination directory tree (device)
-        will be deleted except /lib/
+        will be deleted except /lib/ (disable with --no-delete)
         """
         if destination is None:
             destination = find_device()
@@ -144,7 +78,7 @@ def main():
         else:
             if Path(destination, "boot_out.txt").is_file():
                 CPY_VERSION, board_id = DiskBackend(
-                    destination, logger
+                    destination, circup_logger
                 ).get_circuitpython_version()
                 print(
                     f"Found device ({board_id}) at {destination}, "
@@ -154,80 +88,36 @@ def main():
         destination_root_dir = Path(destination).resolve()
         source_root_dir = Path(source).resolve()
 
-        print(f"From: {source_root_dir}")
-        print(f"  To: {destination_root_dir}\n")
+        cache_dir = user_cache_dir("circdeploy")
+        project_hash = calc_project_hash(source_root_dir)
+        cache_file_path = Path(cache_dir).joinpath(project_hash, "file_cache.pkl")
+        logging.debug(f"Cache file path: {cache_file_path}")
 
-        if not source_root_dir.is_dir():
-            print(
-                "[bold red]"
-                "Source path does not exist or is not a directory:"
-                "[/bold red] "
-                f"{source_root_dir}"
-            )
-            sys.exit(1)
-        if not destination_root_dir.is_dir():
-            print(
-                "[bold red]"
-                "Destination path does not exist or is not a directory:"
-                "[/bold red] "
-                f"{destination_root_dir}"
-            )
-            sys.exit(1)
+        if reset_cache:
+            print("Resetting file cache")
+            try:
+                cache_file_path.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError as err:
+                print(
+                    f"Error while deleting file {cache_file_path}, {err=}, {type(err)=}"
+                )
+                raise err
 
-        if use_gitignore:
-            gitignore_parser = IgnoreParser()
-            gitignore_parser.parse_rule_files(source_root_dir)
+        if use_cache:
+            file_cache = FileCache(cache_file_path)
+            file_cache.load()
         else:
-            gitignore_parser = None
+            file_cache = None
 
-        source_files = collect_matching_files(source_root_dir, None, gitignore_parser)
-
-        # files copied to destination
-        dest_files_copied: list[Path] = []
-
-        for file in source_files:
-            dest_file = destination_root_dir.joinpath(file.relative_to(source_root_dir))
-            dest_files_copied.append(dest_file)
-
-            print(
-                f"Copying ./{file.relative_to(source_root_dir)} to "
-                f"./{dest_file.relative_to(destination_root_dir)}"
-            )
-            if not dry_run:
-                try:
-                    dest_file.parent.mkdir(parents=True, exist_ok=True)
-                except FileNotFoundError as err:
-                    print(
-                        f"Error while creating destination directory "
-                        f"{dest_file.parent}, {err=}, {type(err)=}"
-                    )
-                    raise err
-                try:
-                    shutil.copy(file, dest_file)
-                except (OSError, shutil.SameFileError) as err:
-                    print(
-                        f"Error while copying file: {file} to: {dest_file}, "
-                        f"{err=}, {type(err)=}"
-                    )
-                    raise err
-
-        dest_files_to_delete = collect_matching_files(
+        deploy_files(
+            source_root_dir,
             destination_root_dir,
-            dest_files_copied + [destination_root_dir.joinpath("lib")],
-            gitignore_parser,
+            use_gitignore=use_gitignore,
+            delete=delete,
+            file_cache=file_cache,
+            dry_run=dry_run,
         )
-
-        for file_to_delete in dest_files_to_delete:
-            print(f"Deleting ./{file_to_delete.relative_to(destination_root_dir)}")
-
-            if not dry_run:
-                try:
-                    os.remove(file_to_delete)
-                except OSError as err:
-                    print(
-                        f"Error while deleting file "
-                        f"{file_to_delete}, {err=}, {type(err)=}"
-                    )
-                    raise err
 
     app()

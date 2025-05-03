@@ -12,7 +12,7 @@ from rich import print  # noqa: A004
 from circdeploy.deploy import deploy as deploy_files
 from circdeploy.file_cache import FileCache, calc_project_hash
 
-__version__ = "0.2.1"
+__version__ = "1.0.0"
 
 logger = logging.getLogger(__name__)
 
